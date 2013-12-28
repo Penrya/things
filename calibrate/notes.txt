@@ -1,0 +1,12 @@
+When asked to extrude 50mm, it extrudes 50mm + 19mm!
+
+M99 X0.1 Y0.2
+
+Skal jeg virkelig ændre "extra shells on alternating solid layer" til
+0/1/infinity?
+
+Print:
+- Nespresso holders
+- windmill
+- børnesikring "mylock.scad"
+- http://www.thingiverse.com/thing:13022
