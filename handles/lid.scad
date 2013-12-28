@@ -17,50 +17,64 @@ handle_y = 80;
 handle_z =  8;
 impression_depth = 2;
 impression_margin = 10;
+impression_curve = 3;
 
-module asym_bottle(baselen=2) {
-	translate([0, sqrt(2)-1]) {
-		translate([baselen,0,0]) difference() {
-			union() {
-				circle(r=1);
-				translate([sqrt(2)/2, -sqrt(2)/2]) square([baselen, 1]);
-			}
-			translate([sqrt(2), -sqrt(2)]) {
-				circle(1);
-				square([baselen, 1]);
-			}
+/* Pig's head shape. The "chin" is ogee-shaped. */
+module ogee() {
+	difference() {
+		union() {
+			circle(r=1);
+			translate([sqrt(2)/2, -sqrt(2)/2]) square([1, 1]);
 		}
+		translate([sqrt(2), -sqrt(2)]) {
+			circle(1);
+			square([1, 1]);
+		}
+		translate([-1,-1]) square([1,2]);
+	}
+}
+
+/*
+ * The base cylinder of the bottle will be "baselen" long and have "radius".
+ * The neck curve will be "curvelen" long.
+ */
+module asym_bottle(baselen=1, curvelen=1, radius=1) {
+	translate([0, sqrt(2)-1]) scale([1,radius]) {
+		translate([baselen,0])
+		scale([curvelen/sqrt(2), 1])
+		ogee();
 	
 		translate([0,-1]) square([baselen,2]);
 	}
 }
 
+/*
+ * Like rotate_extrude, but instead of making a circle (seen from above)
+ * it makes a paper-clip shape (i.e. Nascar-track shape).
+ */
 module rotate_extrude_long(length, convexity=4) {
-	rotate_extrude(convexity=convexity) {
+	translate([0, length/2, 0]) {
+		rotate_extrude(convexity=convexity)
 		child();
-	}
+		
+		translate([0,-length,0]) rotate_extrude(convexity=convexity)
+		child();
 	
-	translate([0,-length,0]) rotate_extrude(convexity=convexity) {
+		rotate([90,0,0])
+		linear_extrude(height=length, convexity=convexity)
+		child();
+	
+		mirror([1,0,0])
+		rotate([90,0,0])
+		linear_extrude(height=length, convexity=convexity)
 		child();
 	}
-
-	rotate([90,0,0])
-	linear_extrude(height=length, convexity=convexity) {
-		child();
-	}
-
-	mirror([1,0,0])
-	rotate([90,0,0])
-	linear_extrude(height=length, convexity=convexity) {
-		child();
-	}
-
 }
 
-rotate_extrude_long(length=2)
-asym_bottle(1.8);
+//rotate_extrude_long(length=5)
+//asym_bottle(baselen = 5, curvelen = 1);
 
-*difference() {
+difference() {
 	scale([1,1,handle_z])
 	difference() {
 		translate([0,-handle_y/2,0])
@@ -73,15 +87,20 @@ asym_bottle(1.8);
 	
 	}
 
-	translate([impression_margin,
+	*translate([impression_margin,
 	           -handle_y/2 + impression_margin,
 	           handle_z - impression_depth])
-	minkowski() {
-		cube([handle_x - 2*impression_margin,
-		       handle_y - 2*impression_margin,
-		       handle_z]);
-		sphere(impression_depth/2);
-	}
+	cube([handle_x - 2*impression_margin,
+	       handle_y - 2*impression_margin,
+	       handle_z]);
+
+	translate([21.5 /*TODO*/,
+	           0,
+	           handle_z + 0.4/*TODO*/])
+	rotate_extrude_long(length = 30 /*TODO*/)
+	asym_bottle(baselen = (handle_x - impression_margin - 2/*TODO*/*impression_curve) / 2,
+	            curvelen = impression_curve,
+	            radius = impression_depth);
 }
 
 module bite(width) {
